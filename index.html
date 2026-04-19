@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>お助け計算アプリ</title>
+    <link rel="apple-touch-icon" href="icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { -webkit-tap-highlight-color: transparent; padding-bottom: 300px; } /* キーボード回避用余白 */
+        .active-tab { border-bottom: 4px solid #ef4444; color: #ef4444; }
+        .cheapest { color: #ef4444; font-weight: bold; border: 2px solid #ef4444 !important; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans">
+
+    <nav class="flex bg-white shadow-sm sticky top-0 z-10">
+        <button onclick="switchTab('price')" id="tab-price" class="flex-1 py-4 text-center font-bold active-tab">単価比較</button>
+        <button onclick="switchTab('recipe')" id="tab-recipe" class="flex-1 py-4 text-center font-bold">調味料比率</button>
+    </nav>
+
+    <div class="p-4 max-w-md mx-auto">
+        
+        <section id="section-price">
+            <h2 class="text-lg font-bold mb-4 text-center text-gray-600">どれが一番安い？</h2>
+            <div id="price-container">
+                <div class="price-card bg-white p-4 rounded-xl shadow-sm mb-4 border border-gray-200">
+                    <div class="flex gap-2">
+                        <div class="flex-1">
+                            <label class="block text-xs text-gray-400">金額 (円)</label>
+                            <input type="number" inputmode="decimal" class="price-val w-full border-b-2 border-gray-200 py-2 text-xl focus:border-red-400 outline-none" oninput="calculateCheapest()">
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-xs text-gray-400">容量 (g/ml)</label>
+                            <input type="number" inputmode="decimal" class="unit-val w-full border-b-2 border-gray-200 py-2 text-xl focus:border-red-400 outline-none" oninput="calculateCheapest()">
+                        </div>
+                    </div>
+                    <div class="result-text text-sm mt-2 text-right text-gray-500 min-h-[1.25rem]"></div>
+                </div>
+            </div>
+            
+            <button onclick="addPriceCard()" class="w-full py-3 bg-gray-200 rounded-xl font-bold text-gray-600 mb-4">+ 比較対象を追加</button>
+        </section>
+
+        <section id="section-recipe" class="hidden">
+            <h2 class="text-lg font-bold mb-4 text-center text-gray-600">黄金比換算</h2>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <div class="mb-6">
+                    <label class="block text-sm font-bold text-gray-500 mb-2">比率設定（例 1:2:2）</label>
+                    <div class="flex items-center gap-2">
+                        <input type="number" id="ratio1" value="1" class="w-full text-center border-b-2 py-2 text-xl outline-none" oninput="convertRecipe()">
+                        <span>:</span>
+                        <input type="number" id="ratio2" value="1" class="w-full text-center border-b-2 py-2 text-xl outline-none" oninput="convertRecipe()">
+                        <span>:</span>
+                        <input type="number" id="ratio3" value="1" class="w-full text-center border-b-2 py-2 text-xl outline-none" oninput="convertRecipe()">
+                    </div>
+                </div>
+                <hr class="mb-6">
+                <div>
+                    <label class="block text-sm font-bold text-red-500 mb-2">基準にする量</label>
+                    <div class="flex items-center gap-4">
+                        <span class="text-gray-400 text-sm">一番左の調味料を</span>
+                        <input type="number" id="base-amount" inputmode="decimal" placeholder="量" class="flex-1 border-b-2 border-red-400 py-2 text-2xl text-center outline-none" oninput="convertRecipe()">
+                        <span class="text-gray-400 text-sm">入れる時</span>
+                    </div>
+                </div>
+                <div id="recipe-results" class="mt-8 space-y-4">
+                    </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // タブ切り替え
+        function switchTab(tab) {
+            document.getElementById('section-price').classList.toggle('hidden', tab !== 'price');
+            document.getElementById('section-recipe').classList.toggle('hidden', tab !== 'recipe');
+            document.getElementById('tab-price').classList.toggle('active-tab', tab === 'price');
+            document.getElementById('tab-recipe').classList.toggle('active-tab', tab === 'recipe');
+        }
+
+        // --- 単価比較ロジック ---
+        function addPriceCard() {
+            const container = document.getElementById('price-container');
+            const newCard = container.children[0].cloneNode(true);
+            const inputs = newCard.querySelectorAll('input');
+            inputs.forEach(input => input.value = '');
+            newCard.querySelector('.result-text').innerText = '';
+            newCard.classList.remove('cheapest');
+            container.appendChild(newCard);
+        }
+
+        function calculateCheapest() {
+            const cards = document.querySelectorAll('.price-card');
+            let minUnitPrice = Infinity;
+            let cheapestIndex = -1;
+
+            cards.forEach((card, index) => {
+                const price = parseFloat(card.querySelector('.price-val').value);
+                const unit = parseFloat(card.querySelector('.unit-val').value);
+                const resultText = card.querySelector('.result-text');
+                card.classList.remove('cheapest');
+
+                if (price && unit) {
+                    const unitPrice = price / unit;
+                    resultText.innerText = `単価: ${unitPrice.toFixed(2)} 円`;
+                    
+                    if (unitPrice < minUnitPrice) {
+                        minUnitPrice = unitPrice;
+                        cheapestIndex = index;
+                    }
+                } else {
+                    resultText.innerText = '';
+                }
+            });
+
+            if (cheapestIndex !== -1) {
+                cards[cheapestIndex].classList.add('cheapest');
+            }
+        }
+
+        // --- 調味料換算ロジック ---
+        function convertRecipe() {
+            const r1 = parseFloat(document.getElementById('ratio1').value) || 0;
+            const r2 = parseFloat(document.getElementById('ratio2').value) || 0;
+            const r3 = parseFloat(document.getElementById('ratio3').value) || 0;
+            const base = parseFloat(document.getElementById('base-amount').value) || 0;
+            const resultDiv = document.getElementById('recipe-results');
+
+            if (r1 > 0 && base > 0) {
+                const val2 = (base / r1) * r2;
+                const val3 = (base / r1) * r3;
+                resultDiv.innerHTML = `
+                    <div class="flex justify-between items-center bg-gray-50 p-3 rounded">
+                        <span>2つ目の調味料:</span>
+                        <span class="text-xl font-bold text-red-500">${val2.toFixed(1)}</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-gray-50 p-3 rounded">
+                        <span>3つ目の調味料:</span>
+                        <span class="text-xl font-bold text-red-500">${val3.toFixed(1)}</span>
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = '';
+            }
+        }
+    </script>
+</body>
+</html>
