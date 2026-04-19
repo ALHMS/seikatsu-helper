@@ -26,36 +26,44 @@
         
         <section id="section-price">
             <h2 class="text-lg font-bold mb-4 text-center text-gray-600">どれが一番安い？</h2>
-            <div id="price-container"></div>
-            <button onclick="addPriceCard()" class="w-full py-3 bg-gray-200 rounded-xl font-bold text-gray-600 mb-4">+ 比較対象を追加</button>
+            <form onsubmit="return false;">
+                <div id="price-container"></div>
+                <button type="button" onclick="addPriceCard()" class="w-full py-3 bg-gray-200 rounded-xl font-bold text-gray-600 mb-4">+ 比較対象を追加</button>
+            </form>
         </section>
 
         <section id="section-recipe" class="hidden">
             <h2 class="text-lg font-bold mb-4 text-center text-gray-600">レシピの何倍で作る？</h2>
             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                <div class="mb-4 text-xs text-gray-400">「レシピ量」と「今使いたい量」で倍率を算出します。</div>
-                
-                <div class="flex items-center gap-2 mb-6">
-                    <div class="flex-1 text-center">
-                        <label class="block text-xs text-gray-400 mb-1">レシピ量</label>
-                        <input type="number" id="recipe-val" inputmode="decimal" class="w-full border-b-2 py-2 text-xl text-center focus:border-red-400" oninput="calcAllOtherRecipes()" placeholder="100">
+                <form onsubmit="return false;">
+                    <div class="mb-4 text-xs text-gray-400">「レシピ量」と「今使いたい量」で倍率を算出します。</div>
+                    
+                    <div class="flex items-center gap-2 mb-6">
+                        <div class="flex-1 text-center">
+                            <label class="block text-xs text-gray-400 mb-1">レシピ量</label>
+                            <input type="number" id="recipe-val" inputmode="decimal" class="w-full border-b-2 py-2 text-xl text-center focus:border-red-400 transition-colors" oninput="calcAllOtherRecipes()" placeholder="100">
+                        </div>
+                        <div class="text-xl pt-4 text-gray-400">→</div>
+                        <div class="flex-1 text-center">
+                            <label class="block text-xs text-red-400 font-bold mb-1">使いたい量</label>
+                            <input type="number" id="actual-val" inputmode="decimal" class="w-full border-b-2 border-red-400 py-2 text-xl text-center" oninput="calcAllOtherRecipes()" placeholder="150">
+                        </div>
                     </div>
-                    <div class="text-xl pt-4">→</div>
-                    <div class="flex-1 text-center">
-                        <label class="block text-xs text-red-400 font-bold mb-1">使いたい量</label>
-                        <input type="number" id="actual-val" inputmode="decimal" class="w-full border-b-2 border-red-400 py-2 text-xl text-center" oninput="calcAllOtherRecipes()" placeholder="150">
+
+                    <div id="multiplier-display" class="text-center bg-red-50 py-3 rounded-lg text-red-600 font-bold mb-6 hidden">
+                        レシピの <span id="multiplier-num">1.0</span> 倍で作る
                     </div>
-                </div>
 
-                <div id="multiplier-display" class="text-center bg-red-50 py-3 rounded-lg text-red-600 font-bold mb-6 hidden">
-                    レシピの <span id="multiplier-num">1.0</span> 倍で作る
-                </div>
+                    <hr class="mb-6">
 
-                <hr class="mb-6">
-
-                <label class="block text-xs text-gray-400 mb-3 font-bold">他の調味料を合わせる (Enterで追加)</label>
-                <div id="other-recipes-container" class="space-y-4">
-                    </div>
+                    <label class="block text-xs text-gray-400 mb-3 font-bold">他の調味料を合わせる</label>
+                    <div id="other-recipes-container" class="space-y-3 mb-4">
+                        </div>
+                    
+                    <button type="button" onclick="addOtherRecipeField()" class="w-full py-3 bg-gray-100 rounded-xl font-bold text-gray-500 hover:bg-gray-200 transition-colors">
+                        + 調味料の入力欄を追加
+                    </button>
+                </form>
             </div>
         </section>
     </div>
@@ -82,11 +90,11 @@
                 <div class="flex gap-2">
                     <div class="flex-1">
                         <label class="block text-xs text-gray-400">金額 (円)</label>
-                        <input type="number" inputmode="decimal" class="price-val w-full border-b-2 border-gray-200 py-2 text-xl focus:border-red-400" oninput="calculateCheapest()">
+                        <input type="number" inputmode="decimal" class="price-val w-full border-b-2 border-gray-200 py-2 text-xl focus:border-red-400 transition-colors" oninput="calculateCheapest()">
                     </div>
                     <div class="flex-1">
                         <label class="block text-xs text-gray-400">容量 (g/ml)</label>
-                        <input type="number" inputmode="decimal" class="unit-val w-full border-b-2 border-gray-200 py-2 text-xl focus:border-red-400" oninput="calculateCheapest()">
+                        <input type="number" inputmode="decimal" class="unit-val w-full border-b-2 border-gray-200 py-2 text-xl focus:border-red-400 transition-colors" oninput="calculateCheapest()">
                     </div>
                 </div>
                 <div class="result-text text-sm mt-2 text-right text-gray-500 min-h-[1.25rem]"></div>
@@ -116,32 +124,23 @@
         function addOtherRecipeField() {
             const container = document.getElementById('other-recipes-container');
             const div = document.createElement('div');
-            div.className = "flex items-center gap-4 animate-fadeIn";
+            div.className = "flex items-center gap-2 animate-fadeIn";
+            // w-24で入力幅を制限し、結果側(other-res)にtruncate(省略)を適用してはみ出しを防ぎます
             div.innerHTML = `
-                <input type="number" inputmode="decimal" class="other-input flex-1 border-b-2 py-2 text-xl focus:border-red-400 transition-colors" placeholder="レシピ量" oninput="calcAllOtherRecipes()">
-                <div class="text-xl">→</div>
-                <div class="other-res flex-1 bg-gray-100 py-2 text-xl text-center font-bold rounded text-gray-600">-</div>
+                <input type="number" inputmode="decimal" class="other-input w-24 border-b-2 py-2 text-lg text-center focus:border-red-400 transition-colors" placeholder="レシピ" onfocus="handleOtherFocus(this)" oninput="calcAllOtherRecipes()">
+                <span class="text-lg text-gray-400 flex-shrink-0">→</span>
+                <div class="other-res flex-1 bg-gray-50 border border-gray-100 py-2 px-2 text-lg text-center font-bold rounded text-gray-600 overflow-hidden text-ellipsis whitespace-nowrap">-</div>
             `;
-            
-            // Enterキー（スマホの「次へ」）のイベント
-            const input = div.querySelector('input');
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    // もしこれが最後の入力欄なら新しいのを追加
-                    const allInputs = document.querySelectorAll('.other-input');
-                    if (input === allInputs[allInputs.length - 1]) {
-                        addOtherRecipeField();
-                    } else {
-                        // 次の入力欄へフォーカス移動
-                        const nextInput = input.closest('div').nextElementSibling.querySelector('input');
-                        if(nextInput) nextInput.focus();
-                    }
-                }
-            });
-
             container.appendChild(div);
-            input.focus(); // 追加したらすぐ入力できるように
+        }
+
+        function handleOtherFocus(inputElem) {
+            const allInputs = document.querySelectorAll('.other-input');
+            // アクティブになったのが一番最後のフォームなら、裏で自動的に次のフォームを追加する
+            // これによりスマホのキーボードで常に「次へ」が活性化されます
+            if (inputElem === allInputs[allInputs.length - 1]) {
+                addOtherRecipeField();
+            }
         }
 
         function calcAllOtherRecipes() {
